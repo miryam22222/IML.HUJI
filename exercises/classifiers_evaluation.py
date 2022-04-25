@@ -4,6 +4,7 @@ from typing import Tuple
 import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.subplots import make_subplots
+
 pio.templates.default = "simple_white"
 
 
@@ -26,7 +27,8 @@ def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
         Class vector specifying for each sample its class
 
     """
-    raise NotImplementedError()
+    data = np.load(filename)
+    return data[:, :2], data[:, 2]
 
 
 def run_perceptron():
@@ -36,11 +38,14 @@ def run_perceptron():
     Create a line plot that shows the perceptron algorithm's training loss values (y-axis)
     as a function of the training iterations (x-axis).
     """
-    for n, f in [("Linearly Separable", "linearly_separable.npy"), ("Linearly Inseparable", "linearly_inseparable.npy")]:
+    for n, f in [("Linearly Separable", "linearly_separable.npy"),
+                 ("Linearly Inseparable", "linearly_inseparable.npy")]:
         # Load dataset
-        raise NotImplementedError()
+        data = load_dataset('../datasets/' + f)
 
         # Fit Perceptron and record loss in each fit iteration
+        perceptron = Perceptron()
+        perceptron.fit(data[0], data[1])
         losses = []
         raise NotImplementedError()
 
@@ -66,6 +71,12 @@ def compare_gaussian_classifiers():
 
 
 if __name__ == '__main__':
-    np.random.seed(0)
-    run_perceptron()
-    compare_gaussian_classifiers()
+    # np.random.seed(0)
+    # run_perceptron()
+    # compare_gaussian_classifiers()
+    if __name__ == '__main__':
+        X = np.array([[3, 2, 1], [4, 5, 6], [0, 1, 0], [4, 8, 6]])
+        y = np.array([100, 200, 900, 9])
+        p = Perceptron(False)
+        p.fit(X, y)
+        p.predict(X)

@@ -33,10 +33,12 @@ class Perceptron(BaseEstimator):
         to be filled in `Perceptron.fit` function.
 
     """
+
     def __init__(self,
                  include_intercept: bool = True,
                  max_iter: int = 1000,
-                 callback: Callable[[Perceptron, np.ndarray, int], None] = default_callback):
+                 callback: Callable[
+                     [Perceptron, np.ndarray, int], None] = default_callback):
         """
         Instantiate a Perceptron classifier
 
@@ -90,7 +92,20 @@ class Perceptron(BaseEstimator):
         -----
         Fits model with or without an intercept depending on value of `self.fit_intercept_`
         """
-        raise NotImplementedError()
+        if self.include_intercept_:
+            X = np.concatenate((np.ones((X.shape[0], 1)), X), axis=1)
+        self.coefs_ = np.zeros(X.shape[1])
+        t = 0
+        while t < self.max_iter_:
+            mat = y * np.inner(self.coefs_, X) > 0
+            if np.any(mat == False):
+                err_ind = (np.where(mat == False))[0][0]
+                print(X[err_ind])
+                self.coefs_ = self.coefs_ + y[err_ind] * X[err_ind]
+                self.callback_(self, X[err_ind], y[err_ind])
+            else:
+                break
+            t += 1
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -106,7 +121,9 @@ class Perceptron(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        if self.include_intercept_:
+            X = np.concatenate((np.ones((X.shape[0], 1)), X), axis=1)
+        return np.where(np.inner(X, self.coefs_) >= 0, 1, -1)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -125,4 +142,6 @@ class Perceptron(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        raise NotImplementedError()
+        from ...metrics import misclassification_error
+        pred_y = self._predict(X)
+        return misclassification_error(y, pred_y)
