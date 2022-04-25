@@ -81,8 +81,8 @@ class Perceptron(BaseEstimator):
         while t < self.max_iter_:
             mat = y * np.inner(self.coefs_, X) > 0
             if np.any(mat == False):
-                err_ind = (np.where(mat == False))[0][0]
-                print(X[err_ind])
+                errors = np.where(mat == False)
+                err_ind = errors[0][0]
                 self.coefs_ = self.coefs_ + y[err_ind] * X[err_ind]
                 self.callback_(self, X[err_ind], y[err_ind])
             else:

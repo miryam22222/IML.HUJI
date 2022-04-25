@@ -4,6 +4,7 @@ from utils import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from math import atan2, pi
+import plotly.express as px
 
 
 def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -40,15 +41,23 @@ def run_perceptron():
                  ("Linearly Inseparable", "linearly_inseparable.npy")]:
         # Load dataset
         data = load_dataset('../datasets/' + f)
+        X = data[0]
+        y = data[1]
 
         # Fit Perceptron and record loss in each fit iteration
-        perceptron = Perceptron()
-        perceptron.fit(data[0], data[1])
         losses = []
-        raise NotImplementedError()
+
+        def callback(fit: Perceptron, curr_x: np.ndarray, curr_y: int):
+            losses.append(fit._loss(X, y))
+
+        perceptron = Perceptron(callback=callback)
+        perceptron.fit(X, y)
 
         # Plot figure of loss as function of fitting iteration
-        raise NotImplementedError()
+        fig = px.line(y=losses, title='Misclassificatio Loss in Lineary Separable Smaples as a Function of Perceptron '
+                                      'Algorithm').update_xaxes(title='Iterations').update_yaxes(
+            title='Misclassificatio Loss')
+        fig.write_html(f'{n}.html')
 
 
 def get_ellipse(mu: np.ndarray, cov: np.ndarray):
@@ -104,12 +113,12 @@ def compare_gaussian_classifiers():
 
 
 if __name__ == '__main__':
-    # np.random.seed(0)
-    # run_perceptron()
+    np.random.seed(0)
+    run_perceptron()
     # compare_gaussian_classifiers()
-    if __name__ == '__main__':
-        X = np.array([[3, 2, 1], [4, 5, 6], [0, 1, 0], [4, 8, 6]])
-        y = np.array([100, 200, 900, 9])
-        p = Perceptron(False)
-        p.fit(X, y)
-        p.predict(X)
+    # if __name__ == '__main__':
+    #     X = np.array([[3, 2, 1], [4, 5, 6], [0, 1, 0], [4, 8, 6]])
+    #     y = np.array([100, 200, 900, 9])
+    #     p = Perceptron(False)
+    #     p.fit(X, y)
+    #     p.predict(X)
