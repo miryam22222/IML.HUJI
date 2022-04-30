@@ -1,3 +1,5 @@
+import numpy as np
+
 from IMLearn.learners.classifiers import Perceptron, LDA, GaussianNaiveBayes
 from typing import Tuple
 from utils import *
@@ -54,10 +56,10 @@ def run_perceptron():
         perceptron.fit(X, y)
 
         # Plot figure of loss as function of fitting iteration
-        fig = px.line(y=losses, title='Misclassificatio Loss in Lineary Separable Smaples as a Function of Perceptron '
-                                      'Algorithm').update_xaxes(title='Iterations').update_yaxes(
-            title='Misclassificatio Loss')
-        fig.write_html(f'{n}.html')
+        fig = px.line(y=losses).update_xaxes(title='Iterations').update_yaxes(title='Misclassification Loss')
+        fig.update_layout(title=f'Misclassification Loss in {n} Samples as a Function of Perceptron Algorithm',
+                          title_x=0.5, title_font_size=20, width=1000)
+        fig.write_image(f'../ANSWERS/ex3/{n}.png')
 
 
 def get_ellipse(mu: np.ndarray, cov: np.ndarray):
@@ -91,34 +93,56 @@ def compare_gaussian_classifiers():
     """
     for f in ["gaussian1.npy", "gaussian2.npy"]:
         # Load dataset
-        raise NotImplementedError()
+        data = load_dataset('../datasets/' + f)
+        X = data[0]
+        y = data[1]
 
         # Fit models and predict over training set
-        raise NotImplementedError()
+        lda_model = LDA()
+        lda_model.fit(X, y)
+        lda_predict = lda_model.predict(X)
+
+        gaussian_model = GaussianNaiveBayes()
+        gaussian_model.fit(X, y)
+        gaussian_predict = gaussian_model.predict(X)
 
         # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
         # Create subplots
         from IMLearn.metrics import accuracy
-        raise NotImplementedError()
+        lda_acc = accuracy(y, lda_predict)
+        gaussian_acc = accuracy(y, gaussian_predict)
+        fig = make_subplots(rows=1, cols=2,
+                            subplot_titles=(f'Gaussian Naive Bayes, accuracy: {gaussian_acc}',
+                                            f'LDA, accuracy: {lda_acc}'), x_title=0.5)
 
         # Add traces for data-points setting symbols and colors
-        raise NotImplementedError()
+        fig.add_trace(
+            go.Scatter(x=X[:, 0], y=X[:, 1], mode='markers',
+            marker=dict(color=gaussian_predict, symbol=y, size=4)), row=1, col=1)
+        fig.add_trace(
+            go.Scatter(x=X[:, 0], y=X[:, 1], mode='markers',
+            marker=dict(color=lda_predict, symbol=y, size=4)), row=1, col=2)
 
         # Add `X` dots specifying fitted Gaussians' means
-        raise NotImplementedError()
+        fig.add_trace(go.Scatter(x=gaussian_model.mu_[:, 0], y=gaussian_model.mu_[:, 1], mode='markers',
+                       marker=dict(color='black', symbol='x', size=10)), row=1, col=1)
+        fig.add_trace(go.Scatter(x=lda_model.mu_[:, 0], y=lda_model.mu_[:, 1], mode='markers',
+                       marker=dict(color='black', symbol='x', size=10)), row=1, col=2)
 
         # Add ellipses depicting the covariances of the fitted Gaussians
-        raise NotImplementedError()
+        for i in range(len(gaussian_model.classes_)):
+            fig.add_traces([get_ellipse(np.array(gaussian_model.mu_)[i, :],
+                                        np.diag(np.array(gaussian_model.vars_)[i, :])), ], rows=1, cols=1)
+        for i in range(len(lda_model.classes_)):
+            fig.add_traces([get_ellipse(np.array(lda_model.mu_)[i, :], lda_model.cov_), ], rows=1, cols=2)
+
+        fig.update_layout(title=f'Data Set: {f}', title_x=0.5, title_font_size=20,
+                          width=1000, height=700, showlegend=False)
+        fig.write_image(f'../ANSWERS/ex3/{f}.png')
 
 
 if __name__ == '__main__':
     np.random.seed(0)
     run_perceptron()
-    # compare_gaussian_classifiers()
-    # if __name__ == '__main__':
-    #     X = np.array([[3, 2, 1], [4, 5, 6], [0, 1, 0], [4, 8, 6]])
-    #     y = np.array([100, 200, 900, 9])
-    #     p = Perceptron(False)
-    #     p.fit(X, y)
-    #     p.predict(X)
+    compare_gaussian_classifiers()
