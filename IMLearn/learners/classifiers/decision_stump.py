@@ -3,6 +3,25 @@ from typing import Tuple, NoReturn
 from ...base import BaseEstimator
 import numpy as np
 from itertools import product
+from ...metrics.loss_functions import misclassification_error
+
+
+def weighted_mse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """
+    Calculate weighted mse
+
+    Parameters
+    ----------
+    y_true: ndarray of shape (n_samples, )
+        True response values
+    y_pred: ndarray of shape (n_samples, )
+        Predicted response values (y_pred in {-1, 1})
+
+    Returns
+    -------
+    Weighted mse of given predictions
+    """
+    return np.sum(np.abs(y_true[y_pred != np.sign(y_true)]))
 
 
 class DecisionStump(BaseEstimator):
@@ -39,7 +58,14 @@ class DecisionStump(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        best_mse = np.inf
+        for i, sign in product(range(X.shape[1]), [-1, 1]):
+            threshold, mse = self._find_threshold(X[:, i], y, sign)
+            if mse < best_mse:
+                best_mse = mse
+                self.threshold_ = threshold
+                self.j_ = i
+                self.sign_ = sign
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -63,7 +89,7 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+        return np.where(X[:, self.j_] >= self.threshold_, self.sign_, -self.sign_)
 
     def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> Tuple[float, float]:
         """
@@ -95,7 +121,19 @@ class DecisionStump(BaseEstimator):
         For every tested threshold, values strictly below threshold are predicted as `-sign` whereas values
         which equal to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+        best_mse = np.inf
+        best_threshold = None
+        raw_thresholds = np.sort(np.unique(values))
+        thresholds = (raw_thresholds[:raw_thresholds.shape[0] - 1] + raw_thresholds[1:]) / 2
+
+        for t in thresholds:
+            y_pred = np.where(values >= t, 1 * sign, -1 * sign)
+            mse = weighted_mse(labels, y_pred)
+            if mse < best_mse:
+                best_mse = mse
+                best_threshold = t
+
+        return best_threshold, best_mse
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -114,4 +152,4 @@ class DecisionStump(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        raise NotImplementedError()
+        return misclassification_error(self.predict(X), y)
