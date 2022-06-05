@@ -115,13 +115,6 @@ class AdaBoost(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        # pred_sum = np.zeros(X.shape[0])
-        # for i, model in enumerate(self.models_):
-        #     pred = model.predict(X)
-        #     w = self.weights[i]
-        #     pred_sum += (model.predict(X) * self.weights[i])
-        # x = np.sum(pred_sum)
-        # return np.sign(pred_sum)
         pred = np.sign(np.sum([self.models_[t].predict(X) * self.weights[t] for t in range(T)], axis=0))
         return pred
 
